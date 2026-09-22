@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <video id="video" autoplay playsinline muted></video>
+  <script type="module">
+    import { FilesetResolver, HandLandmarker }
+      from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/vision_bundle.mjs";
+    
+    const ctx = document.getElementById('skeleton').getContext('2d');
+    const du = new DrawingUtils(ctx);
+
+    const video = document.getElementById('video');
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    video.srcObject = stream;
+    await video.play();
+
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/wasm"
+    );
+    const handLandmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate: "GPU"
+      },
+      numHands: 2,
+      runningMode: "VIDEO"
+    });
+
+    let ultimo = -1;
+    function loop() {
+      if (video.currentTime !== ultimo) {
+        ultimo = video.currentTime;
+        const res = handLandmarker.detectForVideo(video, performance.now());
+        
+        const mao = res.landmarks[0];
+        const dx = mao[4].x - mao[8].x;   // polegar - indicador
+        const dy = mao[4].y - mao[8].y;
+        const distancia = Math.hypot(dx, dy);
+        
+        if (distancia < 0.06) {
+          console.log('Pinça!');
+        }
+
+        // ... dentro do loop, apos detectForVideo:
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const mao of res.landmarks) {
+        du.drawConnectors(mao, HandLandmarker.HAND_CONNECTIONS, { color: '#4fd1c5', lineWidth: 4 });
+        du.drawLandmarks(mao, { color: '#ff5d8f', radius: 5 });
+      }
+
+        console.log('Mãos detectadas:', res.landmarks.length);
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
+</body>
+</html>
