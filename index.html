@@ -61,7 +61,13 @@
         esfera.position.y = -(indicador.y * 2 - 1);
 
 
-
+        if (distancia < 0.06) {
+          esfera.material.color.set('#ffb454');
+          esfera.scale.setScalar(1.6);
+        } else {
+          esfera.material.color.set('#6c4cff');
+          esfera.scale.setScalar(1.0);
+        }
 
 
         console.log('Mãos detectadas:', res.landmarks.length);
