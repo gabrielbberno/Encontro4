@@ -9,7 +9,7 @@
 <body>
   <video id="video" autoplay playsinline muted></video>
   <script type="module">
-    import { FilesetResolver, HandLandmarker }
+    import { FilesetResolver, HandLandmarker, DrawingUtils }
       from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.15/vision_bundle.mjs";
     
     const ctx = document.getElementById('skeleton').getContext('2d');
@@ -38,11 +38,12 @@
         ultimo = video.currentTime;
         const res = handLandmarker.detectForVideo(video, performance.now());
         
-
-        const indicador = res.landmarks[0][8];
-        // coordenadas de 0 a 1 viram posicao na cena (aspecto = largura / altura)
-        esfera.position.x = (indicador.x * 2 - 1) * aspecto;
-        esfera.position.y = -(indicador.y * 2 - 1);
+      // ... dentro do loop, apos detectForVideo:
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const mao of res.landmarks) {
+        du.drawConnectors(mao, HandLandmarker.HAND_CONNECTIONS, { color: '#4fd1c5', lineWidth: 4 });
+        du.drawLandmarks(mao, { color: '#ff5d8f', radius: 5 });
+      }
 
 
         const mao = res.landmarks[0];
@@ -53,21 +54,15 @@
         if (distancia < 0.06) {
           console.log('Pinça!');
         }
-        
-        if (distancia < 0.06) {
-          esfera.material.color.set('#ffb454');
-          esfera.scale.setScalar(1.6);
-        } else {
-          esfera.material.color.set('#6c4cff');
-          esfera.scale.setScalar(1.0);
-        }
 
-        // ... dentro do loop, apos detectForVideo:
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const mao of res.landmarks) {
-        du.drawConnectors(mao, HandLandmarker.HAND_CONNECTIONS, { color: '#4fd1c5', lineWidth: 4 });
-        du.drawLandmarks(mao, { color: '#ff5d8f', radius: 5 });
-      }
+        const indicador = res.landmarks[0][8];
+        // coordenadas de 0 a 1 viram posicao na cena (aspecto = largura / altura)
+        esfera.position.x = (indicador.x * 2 - 1) * aspecto;
+        esfera.position.y = -(indicador.y * 2 - 1);
+
+
+
+
 
         console.log('Mãos detectadas:', res.landmarks.length);
       }
