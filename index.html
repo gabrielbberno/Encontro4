@@ -38,6 +38,13 @@
         ultimo = video.currentTime;
         const res = handLandmarker.detectForVideo(video, performance.now());
         
+
+        const indicador = res.landmarks[0][8];
+        // coordenadas de 0 a 1 viram posicao na cena (aspecto = largura / altura)
+        esfera.position.x = (indicador.x * 2 - 1) * aspecto;
+        esfera.position.y = -(indicador.y * 2 - 1);
+
+
         const mao = res.landmarks[0];
         const dx = mao[4].x - mao[8].x;   // polegar - indicador
         const dy = mao[4].y - mao[8].y;
@@ -45,6 +52,14 @@
         
         if (distancia < 0.06) {
           console.log('Pinça!');
+        }
+        
+        if (distancia < 0.06) {
+          esfera.material.color.set('#ffb454');
+          esfera.scale.setScalar(1.6);
+        } else {
+          esfera.material.color.set('#6c4cff');
+          esfera.scale.setScalar(1.0);
         }
 
         // ... dentro do loop, apos detectForVideo:
